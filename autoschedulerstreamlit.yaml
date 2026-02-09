@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoschedulerstreamlit-deployment
+  namespace: auth-schedule
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: autoschedulerstreamlit
+  template:
+    metadata:
+      labels:
+        component: autoschedulerstreamlit
+    spec:
+      containers:
+        - name: autoschedulerstreamlit
+          image: docker-registry.kantimehealth.net/autoschedulerstreamlit:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8501
+          volumeMounts:
+            - mountPath: /app/synth_testdata
+              name: autoschedulerstreamlit-nfs
+            
+          resources:
+            limits:
+              memory: 3Gi
+              cpu: 800m
+            requests:
+              memory: 2Gi
+              cpu: 600m
+      imagePullSecrets:
+        - name: nexus-registry-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: autoschedulerstreamlit-service
+  namespace: auth-schedule
+spec:
+  type: NodePort
+  selector:
+    component: autoschedulerstreamlit
+  ports:
+    - port: 8501
+      nodePort: 30895
+      targetPort: 8501
